@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import List
+from typing import List, Optional
 from datetime import datetime
 
 class QuestionCreate(BaseModel):
@@ -12,6 +12,7 @@ class QuestionCreate(BaseModel):
         from_attributes = True
 
 class QuestionDetail(BaseModel):
+    id: str
     title: str
     content: str
     tags: List[str]
@@ -22,3 +23,11 @@ class QuestionDetail(BaseModel):
     class Config:
         from_attributes = True
 
+class QuestionUpdate(BaseModel):
+    authorId: str  # Use string instead of ObjectId
+    title: Optional[str] = None
+    content: Optional[str] = None
+    tags: Optional[List[str]] = None
+
+    class Config:
+        from_attributes = True

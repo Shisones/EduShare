@@ -1,10 +1,5 @@
 from fastapi import FastAPI, HTTPException, Depends, status
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
-from pymongo import MongoClient
-from bson import ObjectId
-from typing import List, Optional
-from jose import JWTError, jwt
-import uvicorn
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware

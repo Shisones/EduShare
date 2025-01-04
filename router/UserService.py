@@ -141,7 +141,7 @@ async def increase_reputation(user_id: str, target_user_id: str):
         raise HTTPException(status_code=400, detail=f"Error increasing reputation: {str(e)}")
 
 # Delete User Profile
-@user_router.delete("/{user_id}", response_model=str)
+@user_router.delete("/{user_id}", response_model=dict)
 async def delete_user(user_id: str):
     try:
         # Validate and convert user_id to ObjectId
