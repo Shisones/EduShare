@@ -67,28 +67,6 @@ async def get_user_by_id(user_id: str):
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Error getting user by ID: {str(e)}")
 
-
-@user_router.get("/", response_model=List[UserProfile])
-async def get_all_users():
-    try:
-        users = db.users.find()
-        return [
-            {
-                "id": str(user["_id"]),  # Convert ObjectId to string
-                "username": user["username"],
-                "email": user["email"],
-                "reputation": user.get("reputation", 0),
-                "joinDate": user.get("joinDate"),
-                "bio": user.get("bio", ""),
-                "questions": [{"questionId": str(q)} for q in user.get("questions", [])],
-                "answers": [{"answerId": str(a)} for a in user.get("answers", [])],
-            }
-            for user in users
-        ]
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error retrieving users: {str(e)}")
-
-
 # Update User Profile
 @user_router.put("/{user_id}", response_model=UserProfile)
 async def update_user(user_id: str, user: UserUpdate):
@@ -191,7 +169,7 @@ async def revoke_reputation(user_id: str, target_user_id: str):
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Error revoking reputation: {str(e)}")
 
-@user_router.get("/", response_model=List[UserProfile])
+@user_router.get("/", response_model=List[dict])
 async def get_all_users():
     try:
         # Fetch all users from the database
