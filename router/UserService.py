@@ -50,6 +50,9 @@ async def get_user_by_id(user_id: str):
         if not user:
             raise HTTPException(status_code=404, detail="User not found")
         
+        strQ = [str(q) for q in user.get("questions", [])]
+        strA = [str(a) for a in user.get("answers", [])]
+        
         # Transform the data to match the UserProfile schema
         return {
             "id": str(user["_id"]),  # Convert ObjectId to string
@@ -58,8 +61,8 @@ async def get_user_by_id(user_id: str):
             "reputation": user.get("reputation", 0),
             "joinDate": user.get("joinDate"),
             "bio": user.get("bio", ""),
-            "questions": [{"questionId": str(q)} for q in user.get("questions", [])],
-            "answers": [{"answerId": str(a)} for a in user.get("answers", [])],
+            "questions": strQ,
+            "answers": strA,
         }
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Error getting user by ID: {str(e)}")
