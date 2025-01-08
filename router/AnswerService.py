@@ -252,22 +252,22 @@ async def revoke_upvote_answer(user_id: str, answer_id: str):
 
 @answer_router.get("/answers", response_model=List[AnswerDetail])
 async def fetch_all_answers():
-    try:
-        # Fetch all answers from the database
-        answers_cursor = db.answers.find()
-        answers_list = []
+    # try:
+    # Fetch all answers from the database
+    answers_cursor = db.answers.find()
+    answers_list = []
 
-        for answer in answers_cursor:
-            answer["id"] = str(answer["_id"])
-            answer["questionId"] = str(answer["questionId"])
-            answer["authorId"] = str(answer["authorId"])
-            del answer["_id"]  # Remove the ObjectId key
-            answers_list.append(answer)
+    for answer in answers_cursor:
+        answer["id"] = str(answer["_id"])
+        answer["questionId"] = str(answer["questionId"])
+        answer["authorId"] = str(answer["authorId"])
+        del answer["_id"]  # Remove the ObjectId key
+        answers_list.append(answer)
 
-        if not answers_list:
-            raise HTTPException(status_code=404, detail="No answers found")
+    if not answers_list:
+        raise HTTPException(status_code=404, detail="No answers found")
 
-        return answers_list
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Error fetching all answers: {str(e)}")
+    return answers_list
+    # except Exception as e:
+    #     raise HTTPException(status_code=400, detail=f"Error fetching all answers: {str(e)}")
 

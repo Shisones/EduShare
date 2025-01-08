@@ -30,6 +30,24 @@ def remove_question_from_user(user_id: str, question_id: str):
     if result.modified_count == 0:
         raise HTTPException(status_code=500, detail="Failed to remove question from user's questions list")
 
+
+# Utility: Remove answer ID from user's answers list
+def remove_answer_from_user(user_id: str, answer_id: str):
+    result = db.users.update_one(
+        {"_id": ObjectId(user_id)},
+        {"$pull": {"answers": answer_id}}  # Remove the answer from the user's list by its string ID
+    )
+    if result.modified_count == 0:
+        raise HTTPException(status_code=500, detail="Failed to remove answer from user's answers list")
+
+# Utility: Remove answer ID from question's answers list
+def remove_answer_from_question(question_id: str, answer_id: str):
+    result = db.questions.update_one(
+        {"_id": ObjectId(question_id)},
+        {"$pull": {"answers": answer_id}}  # Remove the answer from the question's list by its string ID
+    )
+    if result.modified_count == 0:
+        raise HTTPException(status_code=500, detail="Failed to remove answer from question's answers list")
 # Create a question
 @question_router.post("/questions", response_model=QuestionDetail)
 async def create_question(question: QuestionCreate):
@@ -182,7 +200,23 @@ async def delete_question(question_id: str):
         # Validate user existence
         validate_user(question["authorId"])
 
-        # Remove the question from user's question list
+        # Find all answers associated with the question
+        answers = db.answers.find({"questionId": question_id})
+
+        # Delete each answer associated with the question
+        for answer in answers:
+            answer_id = str(answer["_id"])
+
+            # Remove the answer from the user's list of answers
+            remove_answer_from_user(answer["authorId"], answer_id)
+
+            # Remove the answer from the question's list of answers
+            remove_answer_from_question(question_id, answer_id)
+
+            # Delete the answer from the answers collection
+            db.answers.delete_one({"_id": ObjectId(answer_id)})
+
+        # Remove the question from the user's question list
         remove_question_from_user(question["authorId"], question_id)
 
         # Delete the question from the questions collection
@@ -191,6 +225,7 @@ async def delete_question(question_id: str):
             raise HTTPException(status_code=404, detail="Failed to delete the question")
 
         return {"message": "Question and associated answers deleted successfully", "question_id": question_id}
+    
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
