@@ -156,3 +156,39 @@ async def delete_question(question_id: str):
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
+@question_router.get("/questions/{question_id}/details", response_model=dict)
+async def fetch_question_details_with_answers(question_id: str):
+    try:
+        # Fetch the question
+        question = db.questions.find_one({"_id": ObjectId(question_id)})
+        if not question:
+            raise HTTPException(status_code=404, detail="Question not found")
+
+        # Fetch the question's author
+        author = db.users.find_one({"_id": ObjectId(question["authorId"])})
+        if not author:
+            raise HTTPException(status_code=404, detail="Author not found")
+
+        # Fetch all answers related to the question
+        answer_ids = question.get("answers", [])
+        answers = list(db.answers.find({"_id": {"$in": [ObjectId(answer_id) for answer_id in answer_ids]}}))
+
+        # Format answers for response
+        formatted_answers = []
+        for answer in answers:
+            answer["id"] = str(answer["_id"])
+            del answer["_id"]
+            formatted_answers.append(answer)
+
+        # Construct the response
+        response = {
+            "questionId": str(question["_id"]),
+            "authorName": author.get("username", "Unknown"),
+            "authorId": str(author.get("_id")),
+            "answers": formatted_answers,
+        }
+
+        return response
+
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"An error occurred: {str(e)}")
