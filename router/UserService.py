@@ -95,7 +95,7 @@ async def update_user(user_id: str, user: UserUpdate):
             raise HTTPException(status_code=404, detail="User not found")
         
         updated_data = user.dict(exclude_unset=True)  # Only update provided fields
-        if "password" in updated_data:
+        if "password" in updated_data and updated_data["password"] != None:
             updated_data["passwordHash"] = hash_password(updated_data["password"]) 
             del updated_data["password"]
 
