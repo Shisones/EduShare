@@ -26,6 +26,6 @@ class UserLogin(BaseModel):
 class UserUpdate(BaseModel):
     username: Optional[str] 
     email: Optional[str]
-    password: Optional[str]
+    password: Optional[str] = None
     bio: Optional[str]
 
