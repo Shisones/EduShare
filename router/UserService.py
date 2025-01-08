@@ -158,4 +158,35 @@ async def delete_user(user_id: str):
         raise HTTPException(status_code=400, detail=f"Invalid user ID: {str(e)}")
 
 
+@user_router.put("/{user_id}/revoke/{target_user_id}", response_model=dict)
+async def revoke_reputation(user_id: str, target_user_id: str):
+    try:
+        # Validate users
+        user = db.users.find_one({"_id": ObjectId(user_id)})
+        target_user = db.users.find_one({"_id": ObjectId(target_user_id)})
 
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        if not target_user:
+            raise HTTPException(status_code=404, detail="Target user not found")
+
+        # Check if the user has previously upvoted
+        if user_id not in target_user.get("voters", []):
+            raise HTTPException(status_code=400, detail="You have not upvoted this user")
+
+        # Decrement the reputation and remove the user from voters
+        updated_reputation = target_user.get("reputation", 0) - 1
+        db.users.update_one(
+            {"_id": ObjectId(target_user_id)},
+            {"$set": {"reputation": updated_reputation}, "$pull": {"voters": user_id}}
+        )
+
+        # Fetch the updated target user
+        updated_target_user = db.users.find_one({"_id": ObjectId(target_user_id)})
+        if not updated_target_user:
+            raise HTTPException(status_code=404, detail="Target user not found after update")
+
+        updated_target_user["_id"] = str(updated_target_user["_id"])
+        return updated_target_user  # Return updated user data
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Error revoking reputation: {str(e)}")
