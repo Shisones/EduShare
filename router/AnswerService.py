@@ -79,7 +79,7 @@ async def create_answer(answer: AnswerCreate):
     return answer_data
 
 # Fetch answers by question ID
-@answer_router.get("/answers/question/{question_id}", response_model=List[AnswerDetail])
+@answer_router.get("/answers/question/{question_id}", response_model=List[dict])
 async def fetch_answers_by_question(question_id: str):
     validate_question(question_id)
     answers = db.answers.find({"questionId": question_id})
