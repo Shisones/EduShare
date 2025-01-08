@@ -102,8 +102,8 @@ async def fetch_answers_by_question(question_id: str):
         answer_list.append(answer)
 
     # If no answers are found, raise HTTPException
-    if not answer_list:
-        raise HTTPException(status_code=404, detail="No answers found for this question")
+    # if not answer_list:
+    #     raise HTTPException(status_code=404, detail="No answers found for this question")
     
     return answer_list
 
