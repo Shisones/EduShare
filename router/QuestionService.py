@@ -156,39 +156,51 @@ async def delete_question(question_id: str):
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
-@question_router.get("/questions/{question_id}/details", response_model=dict)
-async def fetch_question_details_with_answers(question_id: str):
+@question_router.get("/questions/details/{question_id}", response_model=dict)
+async def fetch_question_with_answers(question_id: str):
     try:
-        # Fetch the question
+        # Fetch the question document
         question = db.questions.find_one({"_id": ObjectId(question_id)})
         if not question:
             raise HTTPException(status_code=404, detail="Question not found")
 
-        # Fetch the question's author
-        author = db.users.find_one({"_id": ObjectId(question["authorId"])})
+        # Fetch the author's name (question author)
+        author = db.users.find_one({"_id": ObjectId(question["authorId"])}, {"username": 1})
         if not author:
             raise HTTPException(status_code=404, detail="Author not found")
 
-        # Fetch all answers related to the question
+        # Fetch answers and include their full details
         answer_ids = question.get("answers", [])
-        answers = list(db.answers.find({"_id": {"$in": [ObjectId(answer_id) for answer_id in answer_ids]}}))
+        answers = list(db.answers.find({"_id": {"$in": [ObjectId(aid) for aid in answer_ids]}}))
+        if not answers:
+            answers = []
 
-        # Format answers for response
+        # Format answers with the author's name
         formatted_answers = []
         for answer in answers:
-            answer["id"] = str(answer["_id"])
-            del answer["_id"]
-            formatted_answers.append(answer)
+            # Fetch the author's name for each answer
+            answer_author = db.users.find_one({"_id": ObjectId(answer["authorId"])}, {"username": 1})
+            if not answer_author:
+                raise HTTPException(status_code=404, detail="Answer author not found")
+            
+            formatted_answers.append({
+                "id": str(answer["_id"]),
+                "content": answer["content"],
+                "questionId": str(answer["questionId"]),
+                "authorId": str(answer["authorId"]),
+                "authorName": answer_author["username"],  # Answer author's name
+                "createdAt": answer["createdAt"],
+                "upvotes": answer["upvotes"],
+                "isBestAnswer": answer["isBestAnswer"],
+            })
 
-        # Construct the response
+        # Prepare the response
         response = {
             "questionId": str(question["_id"]),
-            "authorName": author.get("username", "Unknown"),
-            "authorId": str(author.get("_id")),
+            "authorName": author["username"],  # Question author's name
             "answers": formatted_answers,
         }
-
         return response
-
     except Exception as e:
-        raise HTTPException(status_code=400, detail=f"An error occurred: {str(e)}")
+        raise HTTPException(status_code=400, detail="An error occurred: " + str(e))
+
