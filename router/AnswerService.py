@@ -264,8 +264,8 @@ async def fetch_all_answers():
         del answer["_id"]  # Remove the ObjectId key
         answers_list.append(answer)
 
-    if not answers_list:
-        raise HTTPException(status_code=404, detail="No answers found")
+    # if not answers_list:
+    #     raise HTTPException(status_code=404, detail="No answers found")
 
     return answers_list
     # except Exception as e:
