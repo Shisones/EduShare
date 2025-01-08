@@ -235,7 +235,12 @@ async def fetch_question_with_answers(question_id: str):
         # Prepare the response
         response = {
             "questionId": str(question["_id"]),
+            "authorId": str(question["authorId"]),
             "authorName": author["username"],  # Question author's name
+            "title": question["title"],
+            "content": question["content"],
+            "tags": question["tags"],
+            "createdAt": question["createdAt"],
             "answers": formatted_answers,
         }
         return response
