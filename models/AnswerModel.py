@@ -24,6 +24,7 @@ class AnswerDetail(BaseModel):
     authorId: str
     createdAt: datetime
     upvotes: int
+    voters: list[str]
     isBestAnswer: bool
 
     class Config:
