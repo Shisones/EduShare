@@ -162,4 +162,39 @@ async def delete_answer(answer_id: str):
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
+@answer_router.put("/{user_id}/upvote/answer/{answer_id}", response_model=dict)
+async def upvote_answer(user_id: str, answer_id: str):
+    try:
+        # Validate the user
+        user = db.users.find_one({"_id": ObjectId(user_id)})
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
 
+        # Fetch the answer
+        answer = db.answers.find_one({"_id": ObjectId(answer_id)})
+        if not answer:
+            raise HTTPException(status_code=404, detail="Answer not found")
+
+        # Check if the user has already upvoted
+        if user_id in answer.get("voters", []):
+            raise HTTPException(status_code=400, detail="You have already upvoted this answer")
+
+        # Increment the upvote count and add the user to the voters list
+        updated_upvotes = answer.get("upvotes", 0) + 1
+        db.answers.update_one(
+            {"_id": ObjectId(answer_id)},
+            {"$set": {"upvotes": updated_upvotes}, "$push": {"voters": user_id}}
+        )
+
+        # Fetch the updated answer
+        updated_answer = db.answers.find_one({"_id": ObjectId(answer_id)})
+        if not updated_answer:
+            raise HTTPException(status_code=404, detail="Answer not found after update")
+
+        # Format the response
+        updated_answer["_id"] = str(updated_answer["_id"])
+        updated_answer["questionId"] = str(updated_answer["questionId"])
+        updated_answer["authorId"] = str(updated_answer["authorId"])
+        return updated_answer  # Return the updated answer data
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Error upvoting the answer: {str(e)}")
