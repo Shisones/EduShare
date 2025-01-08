@@ -90,23 +90,20 @@ async def fetch_answers_by_question(question_id: str):
         del answer["_id"]
         answer_list.append(answer)
 
-    if not answer_list:
-        raise HTTPException(status_code=404, detail="No answers found for this question")
+    # if not answer_list:
+    #     raise HTTPException(status_code=404, detail="No answers found for this question")
     return answer_list
 
 # Fetch answer by answer ID
 @answer_router.get("/answers/{answer_id}", response_model=AnswerDetail)
 async def fetch_answer_by_id(answer_id: str):
-    try:
-        answer = db.answers.find_one({"_id": ObjectId(answer_id)})
-        if not answer:
-            raise HTTPException(status_code=404, detail="Answer not found")
+    answer = db.answers.find_one({"_id": ObjectId(answer_id)})
+    if not answer:
+        raise HTTPException(status_code=404, detail="Answer not found")
 
-        answer["id"] = str(answer["_id"])
-        del answer["_id"]
-        return answer
-    except:
-        raise HTTPException(status_code=400, detail="Invalid answer ID format")
+    answer["id"] = str(answer["_id"])
+    del answer["_id"]
+    return answer
 
 # Update an answer
 @answer_router.put("/answers/{answer_id}", response_model=AnswerDetail)

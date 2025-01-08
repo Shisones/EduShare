@@ -62,26 +62,24 @@ async def fetch_questions_by_user(user_id: str):
         del question["_id"]
         question_list.append(question)
 
-    if not question_list:
-        raise HTTPException(status_code=404, detail="No questions found for this user")
+    # if not question_list:
+    #     raise HTTPException(status_code=404, detail="No questions found for this user")
     return question_list
 
 # Fetch question by question ID
 @question_router.get("/questions/{question_id}", response_model=QuestionDetail)
 async def fetch_question_by_id(question_id: str):
-    try:
-        question = db.questions.find_one({"_id": ObjectId(question_id)})
-        if not question:
-            raise HTTPException(status_code=404, detail="Question not found")
+    question = db.questions.find_one({"_id": ObjectId(question_id)})
+    if not question:
+        raise HTTPException(status_code=404, detail="Question not found")
 
-        validate_user(question["authorId"])
+    validate_user(question["authorId"])
 
-        question["id"] = str(question["_id"])
-        question["answers"] = [str(answer) for answer in question["answers"]]
-        del question["_id"]
-        return question
-    except:
-        raise HTTPException(status_code=400, detail="Invalid question ID format")
+    question["id"] = str(question["_id"])
+    question["answers"] = [str(answer) for answer in question["answers"]]
+    del question["_id"]
+    return question
+    # raise HTTPException(status_code=400, detail="Invalid question ID format")
 
 # Fetch all questions
 @question_router.get("/questions", response_model=List[QuestionDetail])
@@ -95,8 +93,8 @@ async def fetch_all_questions():
         del question["_id"]  # Remove MongoDB's internal `_id` field
         question_list.append(question)
 
-    if not question_list:
-        raise HTTPException(status_code=404, detail="No questions found")
+    # if not question_list:
+    #     raise HTTPException(status_code=404, detail="No questions found")
     return question_list
 
 
