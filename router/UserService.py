@@ -190,3 +190,30 @@ async def revoke_reputation(user_id: str, target_user_id: str):
         return updated_target_user  # Return updated user data
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Error revoking reputation: {str(e)}")
+
+@user_router.get("/", response_model=List[UserProfile])
+async def get_all_users():
+    try:
+        # Fetch all users from the database
+        users_cursor = db.users.find()
+        users = []
+        
+        # Transform the data to match the UserProfile schema
+        for user in users_cursor:
+            strQ = [str(q) for q in user.get("questions", [])]
+            strA = [str(a) for a in user.get("answers", [])]
+            
+            users.append({
+                "id": str(user["_id"]),  # Convert ObjectId to string
+                "username": user["username"],
+                "email": user["email"],
+                "reputation": user.get("reputation", 0),
+                "joinDate": user.get("joinDate"),
+                "bio": user.get("bio", ""),
+                "questions": strQ,
+                "answers": strA,
+            })
+        
+        return users
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Error getting all users: {str(e)}")
