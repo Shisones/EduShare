@@ -81,22 +81,60 @@ async def fetch_question_by_id(question_id: str):
     return question
     # raise HTTPException(status_code=400, detail="Invalid question ID format")
 
-# Fetch all questions
-@question_router.get("/questions", response_model=List[QuestionDetail])
+
+
+@question_router.get("/questions", response_model=List[dict])
 async def fetch_all_questions():
-    questions = db.questions.find()
-    question_list = []
+    # Aggregation pipeline to join questions with the users collection to get author details
+    pipeline = [
+        {
+            "$addFields": {
+                "authorId": {"$toObjectId": "$authorId"}  # Convert authorId from string to ObjectId
+            }
+        },
+        {
+            "$lookup": {
+                "from": "users",  # The users collection
+                "localField": "authorId",  # The field in the questions collection that links to users
+                "foreignField": "_id",  # The field in the users collection that links to questions
+                "as": "author"  # The resulting field that will contain the user data
+            }
+        },
+        {
+            "$unwind": "$author"  # Flatten the array created by $lookup
+        },
+        {
+            "$project": {
+                "_id": 0,  # Exclude the internal MongoDB _id from the response
+                "id": {"$toString": "$_id"},  # Convert ObjectId to string for the question ID
+                "title": 1,
+                "content": 1,
+                "tags": 1,
+                "createdAt": 1,
+                "authorId": {"$toString": "$authorId"},
+                "authorName": "$author.username",  # Get the author's username
+                "answers": 1
+            }
+        }
+    ]
 
-    for question in questions:
-        question["id"] = str(question["_id"])  # Add question ID to the response
-        question["answers"] = [str(answer) for answer in question["answers"]]  # Convert ObjectId to str
-        del question["_id"]  # Remove MongoDB's internal `_id` field
-        question_list.append(question)
+    try:
+        # Execute the aggregation pipeline
+        questions = db.questions.aggregate(pipeline)
+        question_list = []
 
-    # if not question_list:
-    #     raise HTTPException(status_code=404, detail="No questions found")
-    return question_list
+        for question in questions:
+            # Ensure the answers are converted to strings
+            question["answers"] = [str(answer) for answer in question["answers"]]  # Convert ObjectId to str
+            question_list.append(question)
 
+        if not question_list:
+            raise HTTPException(status_code=404, detail="No questions found")
+
+        return question_list
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
 
 @question_router.put("/questions/{question_id}", response_model=QuestionDetail)
 async def update_question(question_id: str, updated_data: QuestionUpdate):
