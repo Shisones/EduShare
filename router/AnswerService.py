@@ -82,16 +82,29 @@ async def create_answer(answer: AnswerCreate):
 @answer_router.get("/answers/question/{question_id}", response_model=List[dict])
 async def fetch_answers_by_question(question_id: str):
     validate_question(question_id)
+    
+    # Find answers for the given question
     answers = db.answers.find({"questionId": question_id})
     answer_list = []
 
     for answer in answers:
+        # Add answer ID as string and remove internal _id
         answer["id"] = str(answer["_id"])
         del answer["_id"]
+        
+        # Fetch the author details from the users collection
+        author = db.users.find_one({"_id": ObjectId(answer["authorId"])})
+        if author:
+            # Add author's name to the answer
+            answer["authorName"] = author.get("username", "Unknown")
+
+        # Append the answer with the author name
         answer_list.append(answer)
 
-    # if not answer_list:
-    #     raise HTTPException(status_code=404, detail="No answers found for this question")
+    # If no answers are found, raise HTTPException
+    if not answer_list:
+        raise HTTPException(status_code=404, detail="No answers found for this question")
+    
     return answer_list
 
 # Fetch answer by answer ID
